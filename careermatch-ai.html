@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CareerMatch AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root{
+    --ink:#171348;
+    --ink-soft:#4a4670;
+    --bg:#fcfbff;
+    --surface:#ffffff;
+    --line:#e8e5f5;
+    --coral:#ff6b4a;
+    --coral-ink:#ffffff;
+    --teal:#0fb894;
+    --gold:#ffb800;
+    --violet:#5b3df0;
+    --chip-bg:#f1effc;
+    --shadow: 0 10px 30px -14px rgba(23,19,72,0.25);
+    --focus: 3px solid #5b3df0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink:#f4f2ff;
+      --ink-soft:#c9c4ea;
+      --bg:#100e29;
+      --surface:#181535;
+      --line:#2c2760;
+      --chip-bg:#211c4a;
+      --shadow: 0 10px 30px -14px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#f4f2ff;
+    --ink-soft:#c9c4ea;
+    --bg:#100e29;
+    --surface:#181535;
+    --line:#2c2760;
+    --chip-bg:#211c4a;
+    --shadow: 0 10px 30px -14px rgba(0,0,0,0.6);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  h1,h2,h3, .display{
+    font-family:'Sora',sans-serif;
+    color:var(--ink);
+    margin:0;
+    letter-spacing:-0.02em;
+  }
+  ::selection{ background:var(--gold); color:var(--ink); }
+  a{color:inherit;}
+  button{font-family:inherit;}
+
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+
+  /* Top bar */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:22px 0;
+  }
+  .logo{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:'Sora',sans-serif;
+    font-weight:700;
+    font-size:1.15rem;
+  }
+  .logo-mark{
+    width:34px;height:34px;border-radius:9px;
+    background:linear-gradient(135deg, var(--violet), var(--coral));
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:1.1rem;font-weight:800;
+    flex-shrink:0;
+  }
+  .progress-track{
+    display:flex;
+    gap:6px;
+  }
+  .progress-dot{
+    width:26px;height:5px;border-radius:3px;
+    background:var(--line);
+    transition:background .35s ease, width .35s ease;
+  }
+  .progress-dot.active{ background:var(--coral); width:34px; }
+  .progress-dot.done{ background:var(--teal); }
+
+  /* Steps container */
+  .stage{ padding:20px 0 90px; min-height:70vh; }
+  .step{
+    display:none;
+  }
+  .step.visible{
+    display:block;
+    animation: rise .5s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes rise{
+    from{ opacity:0; transform:translateY(18px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .step.visible{ animation:none; }
+  }
+
+  /* Hero */
+  .hero{ padding:40px 0 10px; }
+  .eyebrow-free-badge{
+    display:inline-flex; align-items:center; gap:8px;
+    background:var(--chip-bg); color:var(--violet);
+    padding:7px 14px; border-radius:100px;
+    font-size:.85rem; font-weight:600;
+    margin-bottom:22px;
+  }
+  .dotpulse{ width:7px;height:7px;border-radius:50%; background:var(--coral); animation:pulse 1.6s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.3;} }
+
+  .hero h1{
+    font-size:clamp(2.4rem, 5.5vw, 3.6rem);
+    line-height:1.05;
+    font-weight:800;
+    max-width:13ch;
+  }
+  .hero h1 .hl{ color:var(--coral); }
+  .hero p.sub{
+    margin-top:20px;
+    font-size:1.12rem;
+    color:var(--ink-soft);
+    max-width:46ch;
+    line-height:1.55;
+  }
+  .hero-actions{ margin-top:34px; display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
+
+  .btn{
+    border:none; cursor:pointer;
+    font-weight:700; font-size:1rem;
+    padding:15px 26px; border-radius:12px;
+    transition:transform .18s ease, box-shadow .18s ease;
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn:focus-visible{ outline:var(--focus); outline-offset:2px; }
+  .btn-primary{
+    background:var(--ink); color:#fff;
+    box-shadow:var(--shadow);
+  }
+  .btn-primary:hover{ transform:translateY(-2px); }
+  .btn-ghost{
+    background:transparent; color:var(--ink);
+    border:1.5px solid var(--line);
+  }
+  .btn-ghost:hover{ border-color:var(--ink); }
+  .btn-block{ width:100%; justify-content:center; }
+  .btn[disabled]{ opacity:.45; cursor:not-allowed; transform:none !important; }
+
+  .hero-strip{
+    margin-top:56px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+  }
+  .strip-card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px 14px;
+  }
+  .strip-card b{ display:block; font-family:'Sora',sans-serif; font-size:1.3rem; }
+  .strip-card span{ font-size:.82rem; color:var(--ink-soft); }
+  .strip-card:nth-child(1) b{ color:var(--coral); }
+  .strip-card:nth-child(2) b{ color:var(--teal); }
+  .strip-card:nth-child(3) b{ color:var(--gold); }
+  .strip-card:nth-child(4) b{ color:var(--violet); }
+  @media (max-width:720px){ .hero-strip{ grid-template-columns:repeat(2,1fr); } }
+
+  /* Card shell used across steps */
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:40px;
+    box-shadow:var(--shadow);
+    max-width:520px;
+    margin:24px auto 0;
+  }
+  .panel-kicker{ font-size:.9rem; color:var(--ink-soft); margin-bottom:6px; }
+  .panel h2{ font-size:1.6rem; font-weight:700; margin-bottom:8px; }
+  .panel p.desc{ color:var(--ink-soft); font-size:.98rem; line-height:1.5; margin-bottom:26px; }
+
+  /* Login */
+  .tab-row{ display:flex; gap:8px; background:var(--chip-bg); padding:5px; border-radius:12px; margin-bottom:20px; }
+  .tab-btn{
+    flex:1; border:none; background:transparent; padding:10px; border-radius:9px;
+    font-weight:600; font-size:.92rem; color:var(--ink-soft); cursor:pointer;
+  }
+  .tab-btn.active{ background:var(--surface); color:var(--ink); box-shadow:0 2px 8px rgba(0,0,0,.06); }
+  label.field-label{ display:block; font-size:.85rem; font-weight:600; color:var(--ink-soft); margin-bottom:8px; }
+  input[type=text], input[type=email], input[type=tel]{
+    width:100%; padding:14px 16px; border-radius:12px;
+    border:1.5px solid var(--line); background:var(--bg); color:var(--ink);
+    font-size:1rem; font-family:inherit;
+  }
+  input:focus{ outline:none; border-color:var(--violet); box-shadow:0 0 0 4px rgba(91,61,240,0.12); }
+  .field-hint{ font-size:.8rem; color:var(--ink-soft); margin-top:8px; }
+  .otp-box{ margin-top:16px; display:none; }
+  .otp-box.show{ display:block; animation:rise .35s ease; }
+  .otp-inputs{ display:flex; gap:8px; margin-top:8px; }
+  .otp-inputs input{ text-align:center; padding:12px 0; font-size:1.2rem; font-weight:700; }
+  .error-msg{ color:var(--coral); font-size:.85rem; margin-top:8px; min-height:1em; }
+
+  /* Choice cards (resume vs role) */
+  .choice-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:560px){ .choice-grid{ grid-template-columns:1fr; } }
+  .choice-card{
+    border:1.5px solid var(--line); border-radius:16px; padding:22px 18px;
+    cursor:pointer; text-align:left; background:var(--surface);
+    transition:border-color .15s ease, transform .15s ease;
+  }
+  .choice-card:hover{ transform:translateY(-2px); }
+  .choice-card.selected{ border-color:var(--coral); box-shadow:0 0 0 3px rgba(255,107,74,.15); }
+  .choice-icon{
+    width:42px;height:42px;border-radius:11px; display:flex;align-items:center;justify-content:center;
+    font-size:1.3rem; margin-bottom:14px;
+  }
+  .choice-card:nth-child(1) .choice-icon{ background:#ffe9e2; color:var(--coral); }
+  .choice-card:nth-child(2) .choice-icon{ background:#e2f9f2; color:var(--teal); }
+  @media (prefers-color-scheme: dark){
+    .choice-card:nth-child(1) .choice-icon{ background:#3a1f22; }
+    .choice-card:nth-child(2) .choice-icon{ background:#123c33; }
+  }
+  :root[data-theme="dark"] .choice-card:nth-child(1) .choice-icon{ background:#3a1f22; }
+  :root[data-theme="dark"] .choice-card:nth-child(2) .choice-icon{ background:#123c33; }
+  .choice-card h3{ font-size:1.02rem; margin-bottom:5px; }
+  .choice-card p{ font-size:.85rem; color:var(--ink-soft); margin:0; line-height:1.4; }
+
+  .upload-zone{
+    border:2px dashed var(--line); border-radius:16px; padding:34px 20px;
+    text-align:center; cursor:pointer; margin-top:18px;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .upload-zone:hover, .upload-zone.drag{ border-color:var(--violet); background:var(--chip-bg); }
+  .upload-zone .up-icon{ font-size:1.8rem; margin-bottom:10px; }
+  .upload-zone b{ display:block; margin-bottom:4px; }
+  .upload-zone span{ font-size:.82rem; color:var(--ink-soft); }
+  .file-chosen{
+    margin-top:14px; display:none; align-items:center; gap:10px;
+    background:var(--chip-bg); padding:10px 14px; border-radius:10px; font-size:.9rem;
+  }
+  .file-chosen.show{ display:flex; }
+  .file-chosen .fname{ font-weight:600; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .file-chosen button{ background:none; border:none; color:var(--ink-soft); cursor:pointer; font-size:1rem; }
+
+  .back-link{
+    display:inline-flex; align-items:center; gap:6px; margin-top:20px;
+    color:var(--ink-soft); font-size:.88rem; background:none; border:none; cursor:pointer; padding:0;
+  }
+  .back-link:hover{ color:var(--ink); }
+
+  .spinner{
+    width:18px;height:18px;border-radius:50%;
+    border:2.5px solid rgba(255,255,255,.35); border-top-color:#fff;
+    animation:spin .7s linear infinite; display:none;
+  }
+  .spinner.show{ display:inline-block; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  /* Results */
+  .results-head{ padding-top:32px; text-align:left; }
+  .results-head h2{ font-size:1.9rem; }
+  .results-head p{ color:var(--ink-soft); margin-top:8px; }
+  .kw-row{ display:flex; flex-wrap:wrap; gap:8px; margin-top:20px; }
+  .kw-chip{
+    background:var(--chip-bg); color:var(--violet); font-weight:600; font-size:.85rem;
+    padding:8px 14px; border-radius:100px; border:1px solid transparent;
+  }
+  .kw-chip.role{ background:var(--ink); color:#fff; }
+
+  .platform-grid{
+    display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-top:30px;
+  }
+  @media (max-width:640px){ .platform-grid{ grid-template-columns:1fr; } }
+  .platform-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:16px;
+    padding:22px; display:flex; flex-direction:column; gap:14px;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .platform-card:hover{ transform:translateY(-3px); box-shadow:var(--shadow); }
+  .platform-top{ display:flex; align-items:center; gap:12px; }
+  .platform-badge{
+    width:40px;height:40px;border-radius:10px; display:flex;align-items:center;justify-content:center;
+    font-weight:800; font-family:'Sora',sans-serif; font-size:1rem; color:#fff; flex-shrink:0;
+  }
+  .platform-name{ font-weight:700; font-size:1.05rem; }
+  .platform-sub{ font-size:.8rem; color:var(--ink-soft); }
+  .platform-go{
+    align-self:flex-start; font-size:.88rem; font-weight:700; color:var(--ink);
+    display:inline-flex; align-items:center; gap:6px; text-decoration:none;
+    padding:9px 14px; border-radius:9px; border:1.5px solid var(--line);
+  }
+  .platform-go:hover{ border-color:var(--ink); }
+
+  .restart-row{ margin-top:36px; display:flex; gap:14px; flex-wrap:wrap; }
+
+  footer{
+    text-align:center; padding:26px 0 40px; color:var(--ink-soft); font-size:.82rem;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-mark">C</div>
+      CareerMatch AI
+    </div>
+    <div class="progress-track" id="progressTrack">
+      <div class="progress-dot" data-step="0"></div>
+      <div class="progress-dot" data-step="1"></div>
+      <div class="progress-dot" data-step="2"></div>
+      <div class="progress-dot" data-step="3"></div>
+    </div>
+  </div>
+
+  <div class="stage">
+
+    <!-- STEP 0: HERO -->
+    <section class="step" id="step-hero">
+      <div class="hero">
+        <div class="eyebrow-free-badge"><span class="dotpulse"></span> Built from your resume, in seconds</div>
+        <h1>Your next job is hiding in your <span class="hl">resume.</span></h1>
+        <p class="sub">Upload your resume or tell us your target role — we pull out the keywords that matter and line up searches across LinkedIn, Naukri, Internshala and Wellfound in one go.</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" onclick="goTo(1)">Get started</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('howItWorks').scrollIntoView({behavior:'smooth'})">See how it works</button>
+        </div>
+        <div class="hero-strip" id="howItWorks">
+          <div class="strip-card"><b>1</b><span>Sign in</span></div>
+          <div class="strip-card"><b>2</b><span>Resume or role</span></div>
+          <div class="strip-card"><b>3</b><span>Keywords found</span></div>
+          <div class="strip-card"><b>4</b><span>Jobs lined up</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 1: LOGIN -->
+    <section class="step" id="step-login">
+      <div class="panel">
+        <div class="panel-kicker">Step 1 of 3</div>
+        <h2>Sign in to continue</h2>
+        <p class="desc">This just gets your session started — no password needed for this preview.</p>
+        <div class="tab-row">
+          <button class="tab-btn active" id="tabEmail" onclick="switchAuthTab('email')">Email</button>
+          <button class="tab-btn" id="tabPhone" onclick="switchAuthTab('phone')">Phone number</button>
+        </div>
+        <div id="authFieldEmail">
+          <label class="field-label" for="emailInput">Email address</label>
+          <input type="email" id="emailInput" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div id="authFieldPhone" style="display:none;">
+          <label class="field-label" for="phoneInput">Phone number</label>
+          <input type="tel" id="phoneInput" placeholder="+91 98765 43210" autocomplete="tel">
+        </div>
+        <div class="otp-box" id="otpBox">
+          <label class="field-label">Enter the 4-digit code we sent</label>
+          <div class="otp-inputs">
+            <input maxlength="1" type="text" inputmode="numeric">
+            <input maxlength="1" type="text" inputmode="numeric">
+            <input maxlength="1" type="text" inputmode="numeric">
+            <input maxlength="1" type="text" inputmode="numeric">
+          </div>
+          <div class="field-hint">Demo mode — any 4 digits will do.</div>
+        </div>
+        <div class="error-msg" id="loginError"></div>
+        <button class="btn btn-primary btn-block" style="margin-top:18px;" id="loginBtn" onclick="handleLoginStep()">Continue</button>
+        <button class="back-link" onclick="goTo(0)">&larr; Back</button>
+      </div>
+    </section>
+
+    <!-- STEP 2: RESUME OR ROLE -->
+    <section class="step" id="step-input">
+      <div class="panel" style="max-width:600px;">
+        <div class="panel-kicker">Step 2 of 3</div>
+        <h2 id="welcomeHeading">Tell us how to match you</h2>
+        <p class="desc">Upload a resume for the sharpest match, or skip straight to a role if you'd rather not.</p>
+
+        <div class="choice-grid">
+          <div class="choice-card selected" id="cardResume" onclick="selectMode('resume')">
+            <div class="choice-icon">&#128196;</div>
+            <h3>Upload resume</h3>
+            <p>PDF or text file — we'll extract your skills automatically.</p>
+          </div>
+          <div class="choice-card" id="cardRole" onclick="selectMode('role')">
+            <div class="choice-icon">&#127919;</div>
+            <h3>Enter a role</h3>
+            <p>No resume handy? Just type the role you're targeting.</p>
+          </div>
+        </div>
+
+        <div id="resumeSection" style="margin-top:10px;">
+          <div class="upload-zone" id="dropZone" onclick="document.getElementById('resumeFile').click()">
+            <div class="up-icon">&#11014;&#65039;</div>
+            <b>Click to upload, or drag a file here</b>
+            <span>.pdf or .txt &middot; used only in this session</span>
+          </div>
+          <input type="file" id="resumeFile" accept=".pdf,.txt" style="display:none;">
+          <div class="file-chosen" id="fileChosen">
+            <span>&#128203;</span>
+            <span class="fname" id="fileName"></span>
+            <button onclick="clearFile()">&#10005;</button>
+          </div>
+        </div>
+
+        <div id="roleSection" style="display:none; margin-top:10px;">
+          <label class="field-label" for="roleInput">Target role or skills</label>
+          <input type="text" id="roleInput" placeholder="e.g. Frontend Developer, React, Node.js">
+          <div class="field-hint">Separate a few keywords with commas for a broader match.</div>
+        </div>
+
+        <div class="error-msg" id="inputError"></div>
+        <button class="btn btn-primary btn-block" style="margin-top:22px;" id="findBtn" onclick="handleFindJobs()">
+          <span class="spinner" id="findSpinner"></span>
+          <span id="findBtnLabel">Find matching jobs</span>
+        </button>
+        <button class="back-link" onclick="goTo(1)">&larr; Back</button>
+      </div>
+    </section>
+
+    <!-- STEP 3: RESULTS -->
+    <section class="step" id="step-results">
+      <div class="results-head">
+        <div class="panel-kicker">Step 3 of 3</div>
+        <h2 id="resultsHeading">Here's what we found</h2>
+        <p id="resultsSub">Keywords pulled from your input, ready to search across four platforms.</p>
+        <div class="kw-row" id="kwRow"></div>
+      </div>
+
+      <div class="platform-grid" id="platformGrid"></div>
+
+      <div class="restart-row">
+        <button class="btn btn-ghost" onclick="goTo(2)">&larr; Try different input</button>
+        <button class="btn btn-ghost" onclick="restartAll()">Start over</button>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>CareerMatch AI &middot; keyword extraction runs in your browser &middot; job links open the real search pages of each platform</footer>
+</div>
+
+<script>
+/* ---------------- Navigation ---------------- */
+const steps = ['step-hero','step-login','step-input','step-results'];
+let current = 0;
+function goTo(i){
+  steps.forEach((id,idx)=>{
+    document.getElementById(id).classList.toggle('visible', idx===i);
+  });
+  document.querySelectorAll('.progress-dot').forEach((d,idx)=>{
+    d.classList.toggle('active', idx===i);
+    d.classList.toggle('done', idx<i);
+  });
+  current = i;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+goTo(0);
+
+/* ---------------- Login step ---------------- */
+let authMode = 'email';
+function switchAuthTab(mode){
+  authMode = mode;
+  document.getElementById('tabEmail').classList.toggle('active', mode==='email');
+  document.getElementById('tabPhone').classList.toggle('active', mode==='phone');
+  document.getElementById('authFieldEmail').style.display = mode==='email' ? 'block':'none';
+  document.getElementById('authFieldPhone').style.display = mode==='phone' ? 'block':'none';
+  document.getElementById('otpBox').classList.remove('show');
+  document.getElementById('loginBtn').textContent = 'Continue';
+  document.getElementById('loginError').textContent = '';
+}
+let otpStage = false;
+let userHandle = '';
+function handleLoginStep(){
+  const err = document.getElementById('loginError');
+  err.textContent = '';
+  if(!otpStage){
+    if(authMode==='email'){
+      const v = document.getElementById('emailInput').value.trim();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){ err.textContent = 'Enter a valid email address.'; return; }
+      userHandle = v;
+    } else {
+      const v = document.getElementById('phoneInput').value.trim();
+      if(v.replace(/\D/g,'').length < 8){ err.textContent = 'Enter a valid phone number.'; return; }
+      userHandle = v;
+    }
+    document.getElementById('otpBox').classList.add('show');
+    document.getElementById('loginBtn').textContent = 'Verify & continue';
+    otpStage = true;
+    const first = document.querySelector('.otp-inputs input');
+    if(first) first.focus();
+    return;
+  }
+  const digits = Array.from(document.querySelectorAll('.otp-inputs input')).map(i=>i.value);
+  if(digits.some(d=>d==='')){ err.textContent = 'Enter all 4 digits (any digits work in this demo).'; return; }
+  document.getElementById('welcomeHeading').textContent = 'Hi there — let\'s find your match';
+  goTo(2);
+}
+document.querySelectorAll('.otp-inputs input').forEach((inp,idx,arr)=>{
+  inp.addEventListener('input', ()=>{
+    inp.value = inp.value.replace(/\D/g,'');
+    if(inp.value && arr[idx+1]) arr[idx+1].focus();
+  });
+});
+
+/* ---------------- Input step ---------------- */
+let inputMode = 'resume';
+function selectMode(mode){
+  inputMode = mode;
+  document.getElementById('cardResume').classList.toggle('selected', mode==='resume');
+  document.getElementById('cardRole').classList.toggle('selected', mode==='role');
+  document.getElementById('resumeSection').style.display = mode==='resume' ? 'block':'none';
+  document.getElementById('roleSection').style.display = mode==='role' ? 'block':'none';
+  document.getElementById('inputError').textContent = '';
+}
+
+const dropZone = document.getElementById('dropZone');
+const resumeFileInput = document.getElementById('resumeFile');
+let selectedFile = null;
+resumeFileInput.addEventListener('change', e=>{
+  if(e.target.files[0]) setFile(e.target.files[0]);
+});
+['dragover','dragenter'].forEach(ev=> dropZone.addEventListener(ev, e=>{ e.preventDefault(); dropZone.classList.add('drag'); }));
+['dragleave','drop'].forEach(ev=> dropZone.addEventListener(ev, e=>{ e.preventDefault(); dropZone.classList.remove('drag'); }));
+dropZone.addEventListener('drop', e=>{
+  const f = e.dataTransfer.files[0];
+  if(f) setFile(f);
+});
+function setFile(f){
+  const okType = /\.(pdf|txt)$/i.test(f.name);
+  if(!okType){ document.getElementById('inputError').textContent = 'Please choose a .pdf or .txt file.'; return; }
+  selectedFile = f;
+  document.getElementById('fileName').textContent = f.name;
+  document.getElementById('fileChosen').classList.add('show');
+  document.getElementById('inputError').textContent = '';
+}
+function clearFile(){
+  selectedFile = null;
+  resumeFileInput.value = '';
+  document.getElementById('fileChosen').classList.remove('show');
+}
+
+/* ---------------- Keyword extraction ---------------- */
+const SKILL_DICTIONARY = [
+  'Python','Java','JavaScript','TypeScript','C++','C#','SQL','NoSQL','MongoDB','MySQL','PostgreSQL',
+  'React','React.js','Angular','Vue','Node.js','Express','Django','Flask','Spring Boot','Spring',
+  'HTML','CSS','Tailwind','Bootstrap','REST API','GraphQL','Git','GitHub','Docker','Kubernetes',
+  'AWS','Azure','Google Cloud','GCP','Machine Learning','Deep Learning','Artificial Intelligence','AI',
+  'Data Science','Data Analysis','Data Analytics','Pandas','NumPy','TensorFlow','PyTorch','Scikit-learn',
+  'Power BI','Tableau','Excel','R programming','NLP','Computer Vision','Linux','Agile','Scrum',
+  'Kotlin','Swift','Flutter','React Native','Firebase','CI/CD','Jenkins','Figma','UI/UX','DevOps',
+  'Microservices','API Development','Testing','JUnit','Selenium','Cybersecurity','Blockchain',
+  'Big Data','Hadoop','Spark','Communication','Leadership','Problem Solving','Team Management',
+  'Project Management','Product Management','SEO','Digital Marketing','Content Writing'
+];
+const ROLE_DICTIONARY = [
+  'Software Engineer','Software Developer','Frontend Developer','Backend Developer','Full Stack Developer',
+  'Data Scientist','Data Analyst','Data Engineer','Machine Learning Engineer','AI Engineer',
+  'DevOps Engineer','Product Manager','UI/UX Designer','QA Engineer','Business Analyst',
+  'Cloud Engineer','Mobile Developer','Android Developer','iOS Developer','System Administrator',
+  'Cybersecurity Analyst','Web Developer','Intern','Java Developer','Python Developer'
+];
+const STOPWORDS = new Set(['the','and','for','with','that','this','from','have','will','your','you','are','was','were','been','has','had','not','but','all','can','our','their','they','about','into','more','than','also','using','use','used','work','worked','working','team','role','years','year','experience','skills','including']);
+
+function extractKeywords(text){
+  const found = new Map();
+  const roleFound = new Map();
+  const lower = text.toLowerCase();
+  SKILL_DICTIONARY.forEach(term=>{
+    const re = new RegExp('(^|[^a-z0-9])' + term.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '([^a-z0-9]|$)','g');
+    const matches = lower.match(re);
+    if(matches) found.set(term, matches.length);
+  });
+  ROLE_DICTIONARY.forEach(term=>{
+    const re = new RegExp('(^|[^a-z0-9])' + term.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '([^a-z0-9]|$)','g');
+    const matches = lower.match(re);
+    if(matches) roleFound.set(term, matches.length);
+  });
+
+  let ranked = Array.from(found.entries()).sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
+  let roleRanked = Array.from(roleFound.entries()).sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
+
+  if(ranked.length < 5){
+    const words = text.replace(/[^a-zA-Z0-9\s]/g,' ').split(/\s+/).filter(Boolean);
+    const freq = new Map();
+    words.forEach(w=>{
+      const lw = w.toLowerCase();
+      if(w.length > 3 && !STOPWORDS.has(lw)){
+        freq.set(w, (freq.get(w)||0)+1);
+      }
+    });
+    const extra = Array.from(freq.entries()).sort((a,b)=>b[1]-a[1]).slice(0,10).map(e=>e[0]);
+    extra.forEach(w=>{ if(!ranked.includes(w)) ranked.push(w); });
+  }
+
+  return { skills: ranked.slice(0,14), role: roleRanked[0] || null };
+}
+
+async function extractTextFromPDF(file){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+  let fullText = '';
+  for(let p=1; p<=pdf.numPages; p++){
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    fullText += content.items.map(it=>it.str).join(' ') + '\n';
+  }
+  return fullText;
+}
+if(window.pdfjsLib){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+/* ---------------- Find jobs ---------------- */
+async function handleFindJobs(){
+  const err = document.getElementById('inputError');
+  err.textContent = '';
+  let keywords = [];
+  let roleGuess = null;
+
+  if(inputMode === 'resume'){
+    if(!selectedFile){ err.textContent = 'Please upload a resume file, or switch to "Enter a role".'; return; }
+    setLoading(true);
+    try{
+      let text = '';
+      if(/\.pdf$/i.test(selectedFile.name)){
+        text = await extractTextFromPDF(selectedFile);
+      } else {
+        text = await selectedFile.text();
+      }
+      if(!text || text.trim().length < 20){
+        err.textContent = "Couldn't read enough text from that file. Try a text-based PDF or a .txt file.";
+        setLoading(false);
+        return;
+      }
+      const result = extractKeywords(text);
+      keywords = result.skills;
+      roleGuess = result.role;
+    } catch(e){
+      err.textContent = 'Something went wrong reading that file. Try a different file.';
+      setLoading(false);
+      return;
+    }
+  } else {
+    const v = document.getElementById('roleInput').value.trim();
+    if(!v){ err.textContent = 'Enter a role or a few skills to search for.'; return; }
+    setLoading(true);
+    keywords = v.split(',').map(s=>s.trim()).filter(Boolean);
+    roleGuess = keywords[0];
+  }
+
+  setLoading(false);
+  showResults(keywords, roleGuess);
+  goTo(3);
+}
+function setLoading(on){
+  document.getElementById('findSpinner').classList.toggle('show', on);
+  document.getElementById('findBtnLabel').textContent = on ? 'Reading & extracting…' : 'Find matching jobs';
+  document.getElementById('findBtn').disabled = on;
+}
+
+/* ---------------- Results ---------------- */
+const PLATFORMS = [
+  { name:'LinkedIn', sub:'Global professional network', color:'#0A66C2', initials:'in',
+    buildUrl:(q)=>`https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(q)}` },
+  { name:'Naukri', sub:'India\'s largest job portal', color:'#FF7555', initials:'N',
+    buildUrl:(q)=>`https://www.naukri.com/${encodeURIComponent(q.replace(/\s+/g,'-').toLowerCase())}-jobs` },
+  { name:'Internshala', sub:'Internships & fresher roles', color:'#00A5AD', initials:'IS',
+    buildUrl:(q)=>`https://internshala.com/internships/keywords-${encodeURIComponent(q.replace(/\s+/g,'-').toLowerCase())}` },
+  { name:'Wellfound', sub:'Startup jobs (ex-AngelList)', color:'#5B3DF0', initials:'W',
+    buildUrl:(q)=>`https://wellfound.com/jobs?query=${encodeURIComponent(q)}` },
+];
+
+function showResults(keywords, roleGuess){
+  const query = (roleGuess ? roleGuess + ' ' : '') + keywords.slice(0,4).join(' ');
+  const finalQuery = query.trim() || keywords.join(' ') || 'jobs';
+
+  document.getElementById('resultsHeading').textContent = roleGuess ? `Matches for "${roleGuess}"` : 'Here\'s what we found';
+
+  const kwRow = document.getElementById('kwRow');
+  kwRow.innerHTML = '';
+  if(roleGuess){
+    const chip = document.createElement('span');
+    chip.className = 'kw-chip role';
+    chip.textContent = roleGuess;
+    kwRow.appendChild(chip);
+  }
+  keywords.forEach(k=>{
+    if(k === roleGuess) return;
+    const chip = document.createElement('span');
+    chip.className = 'kw-chip';
+    chip.textContent = k;
+    kwRow.appendChild(chip);
+  });
+  if(kwRow.children.length === 0){
+    const chip = document.createElement('span');
+    chip.className = 'kw-chip';
+    chip.textContent = finalQuery;
+    kwRow.appendChild(chip);
+  }
+
+  const grid = document.getElementById('platformGrid');
+  grid.innerHTML = '';
+  PLATFORMS.forEach(p=>{
+    const card = document.createElement('div');
+    card.className = 'platform-card';
+    card.innerHTML = `
+      <div class="platform-top">
+        <div class="platform-badge" style="background:${p.color}">${p.initials}</div>
+        <div>
+          <div class="platform-name">${p.name}</div>
+          <div class="platform-sub">${p.sub}</div>
+        </div>
+      </div>
+      <a class="platform-go" href="${p.buildUrl(finalQuery)}" target="_blank" rel="noopener">Search jobs &nbsp;&#8594;</a>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function restartAll(){
+  otpStage = false;
+  document.getElementById('otpBox').classList.remove('show');
+  document.getElementById('loginBtn').textContent = 'Continue';
+  document.getElementById('emailInput').value = '';
+  document.getElementById('phoneInput').value = '';
+  document.querySelectorAll('.otp-inputs input').forEach(i=>i.value='');
+  clearFile();
+  document.getElementById('roleInput').value = '';
+  selectMode('resume');
+  goTo(0);
+}
+</script>
+</body>
+</html>
